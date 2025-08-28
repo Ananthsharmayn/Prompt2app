@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MVP: Prompt → React App</title>
+  <style>
+    /* same CSS as before (kept for brevity) */
+    :root{ --bg:#0b1020; --panel:#0f172a; --card:#111827; --muted:#9ca3af; --text:#e5e7eb; --accent:#7c3aed; --accent-2:#06b6d4; --border:#1f2937; --ok:#10b981; --error:#ef4444; --warn:#f59e0b; }
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial; color:var(--text); background:radial-gradient(1200px 600px at 0% 0%, rgba(124,58,237,.15), transparent 60%), radial-gradient(900px 500px at 100% 100%, rgba(6,182,212,.12), transparent 60%), linear-gradient(180deg, #0b1020 0%, #0a0f1b 100%); display:flex; gap:16px; padding:16px; }
+    .shell{display:grid; grid-template-columns: 420px 1fr; gap:16px; width:100%; height:100%; }
+    .panel{ background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04); }
+    .left{display:flex;flex-direction:column;gap:14px} h1{font-size:18px;margin:0 0 6px 0;font-weight:600;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+    .badge{padding:3px 8px;border-radius:999px;font-size:11px;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);color:#e9d5ff}
+    textarea{width:100%;min-height:140px;max-height:240px;resize:vertical;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;line-height:1.4}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(180deg,#1f2937,#111827);color:#fff;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);transition:transform .06s ease, box-shadow .2s ease;}
+    button:hover{transform:translateY(-1px)} button:disabled{opacity:.6;cursor:not-allowed}
+    .ghost{background:transparent} .primary{background:linear-gradient(180deg, var(--accent), #5b21b6); border-color:rgba(124,58,237,.6)}
+    .status{flex:1;display:flex;flex-direction:column;min-height:240px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .status-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;justify-content:space-between}
+    .chips{display:flex;gap:6px;flex-wrap:wrap} .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:#0b1220;border:1px solid var(--border);color:var(--muted)}
+    .logs{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:4px} .line{padding:6px 8px;border-radius:8px;background:#0b1220;border:1px dashed #1f2a3a;font-size:12px;white-space:pre-wrap}
+    .line.error{border-color:rgba(239,68,68,.5);color:#fecaca;background:rgba(239,68,68,.05)} .line.info{color:#d1d5db}
+    .footer{display:flex;gap:10px;padding:10px;border-top:1px solid var(--border);align-items:center;justify-content:space-between}
+    .muted{color:var(--muted);font-size:12px}
+    .timeline{display:flex;gap:8px;align-items:center}
+    .dot{width:10px;height:10px;border-radius:999px;background:#334155;border:1px solid #475569}
+    .dot.on{background:var(--ok);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+    .dot.warn{background:var(--warn)} .dot.err{background:var(--error)}
+    .right{display:flex;flex-direction:column} .hero{padding:10px 12px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+    iframe{flex:1;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0b1220}
+    .progress{position:relative;height:6px;background:#0b1220;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-top:4px} .bar{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .examples{display:flex;gap:6px;flex-wrap:wrap} .pill{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--border);cursor:pointer}
+    .pill:hover{background:rgba(255,255,255,.1)} .link{color:#a78bfa;text-decoration:none} .link:hover{text-decoration:underline}
+    .fileinput{display:flex;gap:8px;align-items:center}
+    input[type="file"]{background:transparent;color:var(--text)}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="panel left">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h1>Prompt → React App <span class="badge">Vite + TS</span></h1>
+        <div class="examples">
+          <span class="pill" data-example="A minimal todo app with add/delete and localStorage.">Todo</span>
+          <span class="pill" data-example="A landing page for a note-taking app with hero, features grid, and signup form.">Landing</span>
+          <span class="pill" data-example="A dashboard with a left sidebar and three cards showing random stats.">Dashboard</span>
+          <span class="pill" data-example="A color palette generator with copy-to-clipboard.">Palette</span>
+        </div>
+      </div>
+
+      <textarea id="prompt" placeholder="Describe the app you want. Keep dependencies minimal unless needed…"></textarea>
+
+      <div class="fileinput">
+        <input id="videoFile" type="file" accept="video/*" />
+        <div class="small">Upload a video (optional). If you do, the server will extract 1 frame/sec and analyze each frame.</div>
+      </div>
+
+      <div class="actions">
+        <button id="generateBtn" class="primary">Generate (text-only)</button>
+        <button id="generateVideoBtn" class="primary" style="background:linear-gradient(180deg,#06b6d4,#0284c7);">Generate from Video</button>
+        <button id="clearBtn" class="ghost">Clear Logs</button>
+        <button id="copyBtn" class="ghost">Copy Logs</button>
+        <button id="downloadBtn" class="ghost">Download Logs</button>
+        <span class="muted" id="elapsed">Elapsed: 0s</span>
+      </div>
+
+      <div class="status" id="statusWrap">
+        <div class="status-head">
+          <div class="chips">
+            <span class="chip" id="stateChip">idle</span>
+            <span class="chip"><a class="link" href="http://127.0.0.1:5173" target="_blank" rel="noreferrer">Open 5173 ↗</a></span>
+          </div>
+          <div style="min-width:200px">
+            <div class="progress"><div class="bar" id="bar"></div></div>
+          </div>
+        </div>
+        <div id="status" class="logs" aria-live="polite"></div>
+        <div class="footer">
+          <div class="timeline" id="timeline">
+            <div class="dot" id="t_gen" title="Generating"></div><span class="muted">Generate</span>
+            <div class="dot" id="t_install" title="Installing"></div><span class="muted">Install</span>
+            <div class="dot" id="t_start" title="Starting"></div><span class="muted">Start</span>
+            <div class="dot" id="t_run" title="Running"></div><span class="muted">Running</span>
+          </div>
+          <span class="muted">Logs update continuously</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel right">
+      <div class="hero">
+        <div class="title">Live Preview</div>
+        <div class="muted">Iframe will appear when ready</div>
+      </div>
+      <iframe id="preview" style="display:none;"></iframe>
+    </div>
+  </div>
+
+<script>
+  // const BACKEND_URL = 'http://127.0.0.1:8000';
+  const BACKEND_URL = 'http://34.42.98.247:8000';
+  // const APP_URL = 'http://127.0.0.1:5173';
+  const APP_URL = 'http://34.42.98.247:5173';
+  const STORE_KEY = 'mvp_state_v2';
+
+  const statusEl = document.getElementById('status');
+  const previewEl = document.getElementById('preview');
+  const promptEl = document.getElementById('prompt');
+  const generateBtn = document.getElementById('generateBtn');
+  const generateVideoBtn = document.getElementById('generateVideoBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const videoFileEl = document.getElementById('videoFile');
+  const stateChip = document.getElementById('stateChip');
+  const bar = document.getElementById('bar');
+  const elapsedEl = document.getElementById('elapsed');
+
+  const dots = {
+    generating: document.getElementById('t_gen'),
+    installing: document.getElementById('t_install'),
+    starting: document.getElementById('t_start'),
+    running: document.getElementById('t_run'),
+  };
+
+  // Persistent state (reload-safe)
+  let appState = { jobId: null, prompt: '', busy: false, startTime: null, lastState: 'idle' };
+  function saveState(){ try{ sessionStorage.setItem(STORE_KEY, JSON.stringify(appState)); }catch{} }
+  function loadState(){ try{ const raw = sessionStorage.getItem(STORE_KEY); if(raw) appState = {...appState, ...JSON.parse(raw)} }catch{} }
+  loadState();
+  if(appState.prompt) promptEl.value = appState.prompt;
+
+  function addStatus(message, type="info"){ const line = document.createElement('div'); line.className = 'line ' + type; line.textContent = message; statusEl.appendChild(line); statusEl.scrollTop = statusEl.scrollHeight; }
+  function setBusy(busy){ appState.busy = busy; saveState(); generateBtn.disabled = busy; generateVideoBtn.disabled = busy; promptEl.disabled = busy; videoFileEl.disabled = busy; if(busy) window.addEventListener('beforeunload', beforeUnloadBlocker); else window.removeEventListener('beforeunload', beforeUnloadBlocker); }
+  function beforeUnloadBlocker(e){ e.preventDefault(); e.returnValue=''; return ''; }
+  function setState(state){ appState.lastState = state; saveState(); stateChip.textContent = state; Object.values(dots).forEach(d=>d.className='dot'); if(state==='generating'){dots.generating.classList.add('on');bar.style.width='20%'} if(state==='installing'){dots.generating.classList.add('on');dots.installing.classList.add('on');bar.style.width='55%'} if(state==='starting'){dots.installing.classList.add('on');dots.starting.classList.add('on');bar.style.width='80%'} if(state==='running'){dots.starting.classList.add('on');dots.running.classList.add('on');bar.style.width='100%'} if(state==='failed'){dots.starting.classList.add('err');bar.style.width='100%';bar.style.background='linear-gradient(90deg,#ef4444,#b91c1c)'} }
+
+  function resetUI({keepPrompt=true} = {}){ statusEl.innerHTML=''; previewEl.style.display='none'; previewEl.removeAttribute('src'); bar.style.width='0%'; bar.style.background='linear-gradient(90deg,#7c3aed,#06b6d4)'; stateChip.textContent='idle'; Object.values(dots).forEach(d=>d.className='dot'); elapsedEl.textContent='Elapsed: 0s'; if(!keepPrompt) promptEl.value=''; }
+
+  let pollTimer=null, elapsedTimer=null, inFlight=null;
+  function startElapsedTimer(){ if(elapsedTimer) clearInterval(elapsedTimer); elapsedTimer=setInterval(()=>{ const s=Math.max(0, Math.round(((appState.startTime??Date.now()) - 0 + Date.now() - (appState.startTime??Date.now())) / 1000)); elapsedEl.textContent=`Elapsed: ${s}s`;},1000); }
+  function stopElapsedTimer(){ if(elapsedTimer) clearInterval(elapsedTimer); elapsedTimer=null; }
+
+  // Example pills
+  document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click', ()=>{ promptEl.value = p.getAttribute('data-example'); appState.prompt = promptEl.value; saveState(); }));
+
+  clearBtn.addEventListener('click', ()=>{ statusEl.innerHTML=''; });
+  copyBtn.addEventListener('click', async ()=>{ const text = Array.from(statusEl.querySelectorAll('.line')).map(n=>n.textContent).join('\n'); try{ await navigator.clipboard.writeText(text);}catch{} });
+  downloadBtn.addEventListener('click', ()=>{ const text = Array.from(statusEl.querySelectorAll('.line')).map(n=>n.textContent).join('\n'); const blob=new Blob([text],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`logs-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+
+  // Ctrl/Cmd+Enter submit
+  document.addEventListener('keydown',(e)=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&!generateBtn.disabled){ e.preventDefault(); generateBtn.click(); } });
+
+  // Persist prompt while typing
+  promptEl.addEventListener('input', ()=>{ appState.prompt = promptEl.value; saveState(); });
+
+  // --- Text-only generate (existing) ---
+  generateBtn.addEventListener('click', async (ev)=>{
+    ev.preventDefault();
+    const prompt = promptEl.value.trim();
+    if(!prompt) { alert('Please enter a prompt or use video upload.'); return; }
+    stopPolling();
+    resetUI({keepPrompt:true});
+    setBusy(true); setState('generating'); appState.startTime = Date.now(); saveState(); startElapsedTimer();
+    addStatus('Creating job (text-only)…');
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/jobs`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt }) });
+      if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.error||'Failed to create job'); }
+      const data = await res.json();
+      appState.jobId = data.jobId; saveState(); addStatus(`Job created: ${appState.jobId}`);
+      startPolling();
+    }catch(e){
+      addStatus(String(e),'error'); setBusy(false); setState('failed'); stopElapsedTimer();
+    }
+  });
+
+  // --- Video generate ---
+  generateVideoBtn.addEventListener('click', async (ev)=>{
+    ev.preventDefault();
+    const file = videoFileEl.files[0];
+    if(!file) return alert("Please choose a video file first (mp4/webm/mov). Optionally include a prompt.");
+    const prompt = promptEl.value.trim();
+    stopPolling();
+    resetUI({keepPrompt:true});
+    setBusy(true); setState('extracting_frames'); appState.startTime = Date.now(); saveState(); startElapsedTimer();
+    addStatus('Uploading video and creating job…');
+
+    try{
+      const fd = new FormData();
+      fd.append('file', file, file.name);
+      fd.append('prompt', prompt || '');
+      const res = await fetch(`${BACKEND_URL}/api/upload-video`, { method: 'POST', body: fd });
+      if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.error||'Failed to upload video'); }
+      const data = await res.json();
+      appState.jobId = data.jobId; saveState(); addStatus(`Job created: ${appState.jobId}`);
+      startPolling();
+    }catch(e){
+      addStatus(String(e),'error'); setBusy(false); setState('failed'); stopElapsedTimer();
+    }
+  });
+
+  function startPolling(){
+    if(!appState.jobId) return;
+    const loop = async ()=>{
+      if(!appState.jobId) return;
+      try{
+        if(inFlight) inFlight.abort();
+        inFlight = new AbortController();
+        const res = await fetch(`${BACKEND_URL}/api/jobs/${appState.jobId}/status`, { signal: inFlight.signal });
+        if(!res.ok) throw new Error('Failed to fetch status');
+        const data = await res.json();
+        statusEl.innerHTML = '';
+        (data.messages || []).forEach(m => addStatus(m.text, m.type));
+        setState(data.state);
+        const server = data.server || { url: APP_URL, up: false };
+        if(server.up === true){
+          previewEl.src = server.url; previewEl.style.display = 'block'; addStatus('App is live in the preview.'); setBusy(false); setState('running'); stopPolling(); stopElapsedTimer(); return;
+        } else if(data.state === 'failed'){
+          addStatus('Job failed.', 'error'); setBusy(false); setState('failed'); stopPolling(); stopElapsedTimer(); return;
+        }
+      }catch(e){
+        addStatus(String(e),'error'); setBusy(false); setState('failed'); stopPolling(); stopElapsedTimer(); return;
+      }
+      pollTimer = setTimeout(loop, 1200);
+    };
+    loop();
+  }
+  function stopPolling(){ if(pollTimer) clearTimeout(pollTimer); pollTimer=null; if(inFlight) inFlight.abort(); inFlight=null; }
+
+  // restore session (if page reload)
+  if(appState.busy && appState.jobId){
+    addStatus('Restored session. Resuming job ' + appState.jobId + ' …');
+    setBusy(true);
+    setState(appState.lastState || 'generating');
+    if(!appState.startTime) appState.startTime = Date.now();
+    startElapsedTimer();
+    startPolling();
+  } else if(appState.jobId && (appState.lastState === 'running')){
+    previewEl.src = APP_URL; previewEl.style.display = 'block'; setState('running'); setBusy(false);
+    // fetch logs once:
+    (async ()=>{ try{ const res = await fetch(`${BACKEND_URL}/api/jobs/${appState.jobId}/status`); if(res.ok){ const d = await res.json(); (d.messages||[]).forEach(m=>addStatus(m.text,m.type)); } }catch{} })();
+  }
+
+</script>
+</body>
+</html>
